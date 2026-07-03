@@ -5,15 +5,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import top.speedcubing.common.database.Database;
-import top.speedcubing.common.io.SocketWriter;
+import top.speedcubing.common.io.RedisManager;
 import top.speedcubing.lib.utils.SQL.SQLConnection;
 import top.speedcubing.lib.utils.SQL.SQLResult;
 import top.speedcubing.lib.utils.SQL.SQLRow;
 import top.speedcubing.lib.utils.internet.HostAndPort;
 
-public class MinecraftProxy implements Writable{
+public class MinecraftProxy implements Writable {
     private static volatile Map<String, MinecraftProxy> proxies = new HashMap<>();
 
     public static MinecraftProxy getProxy(String name) {
@@ -52,19 +52,35 @@ public class MinecraftProxy implements Writable{
 
     public MinecraftProxy(String name, HostAndPort address) {
         this.name = name;
+        // Keep listenerAddress for legacy lookup compatibility; no longer used for TCP.
         this.listenerAddress = new HostAndPort(address.getHost(), address.getPort() + 1000);
         proxies.put(name, this);
     }
 
+    /** No-op: connections are now stateless Redis publishes. */
+    public void close() {}
+
     public int getPlayerCount() {
+        String countStr = RedisManager.hget("sc:proxycounts", name);
+        if (countStr != null) {
+            try {
+                return Integer.parseInt(countStr);
+            } catch (NumberFormatException ignored) {}
+        }
         try (SQLConnection connection = Database.getSystem()) {
-            return connection.select("SUM(onlinecount)").from("stat_onlinecount").where("server='" + name + "'").executeResult().getInt();
+            Integer count = connection.select("SUM(onlinecount)").from("stat_onlinecount").where("proxy='" + name + "'").executeResult().getInt();
+            return count == null ? 0 : count;
         }
     }
 
     @Override
-    public CompletableFuture<DataInputStream> write(byte[] data) {
-        return SocketWriter.writeResponse(listenerAddress, data);
+    public void write(byte[] data) {
+        RedisManager.publish(name, data);
+    }
+
+    @Override
+    public CompletableFuture<DataInputStream> writeRpc(byte[] data, long timeout, TimeUnit unit) {
+        return RedisManager.publishAndAwaitReply(name, data, timeout, unit);
     }
 
     public HostAndPort getListenerAddress() {

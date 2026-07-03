@@ -57,12 +57,14 @@ public class Rank {
     */
 
     public static String getRank(String dbRank, int id) {
+        String resolvedRank = normalizeRank(dbRank);
+
         //default, champ
-        if (dbRank.equals("default") && DatabaseData.champs.contains(id)) {
+        if ("default".equals(resolvedRank) && DatabaseData.champs.contains(id) && rankByName.containsKey("champ")) {
             return "champ";
         }
 
-        return calculatePeriodRank(dbRank, id);
+        return normalizeRank(calculatePeriodRank(resolvedRank, id));
     }
 
     private static String calculatePeriodRank(String dbRank, int id) {
@@ -75,7 +77,7 @@ public class Rank {
 
             //unit. second
             if ((SystemUtils.getCurrentSecond() - data.getInt("at")) < data.getInt("duration")) {
-                return data.getString("priority");
+                return normalizeRank(data.getString("priority"));
             }
 
             return dbRank;
@@ -83,11 +85,33 @@ public class Rank {
     }
 
     public static int getCode(String rank) {
-        return 10 + rankByName.get(rank).orderCode;
+        return 10 + rankByName.get(normalizeRank(rank)).orderCode;
     }
 
     public static RankFormat getFormat(String rank, int id) {
-        return rankByName.get(getRank(rank, id)).getFormat();
+        return rankByName.get(normalizeRank(getRank(rank, id))).getFormat();
+    }
+
+    private static String normalizeRank(String rank) {
+        if (rank != null) {
+            String lowered = rank.toLowerCase();
+            if (rankByName.containsKey(lowered)) {
+                return lowered;
+            }
+            if (rankByName.containsKey(rank)) {
+                return rank;
+            }
+        }
+
+        if (rankByName.containsKey("default")) {
+            return "default";
+        }
+
+        if (!rankByName.isEmpty()) {
+            return rankByName.keySet().iterator().next();
+        }
+
+        return "default";
     }
 
     public static boolean isStaff(String realRank) {

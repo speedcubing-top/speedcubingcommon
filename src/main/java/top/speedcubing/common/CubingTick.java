@@ -5,6 +5,7 @@ import java.util.TimerTask;
 import top.speedcubing.common.database.Database;
 import top.speedcubing.common.database.DatabaseData;
 import top.speedcubing.common.events.CubingTickEvent;
+import top.speedcubing.common.io.RedisManager;
 import top.speedcubing.lib.utils.SQL.SQLConnection;
 
 public class CubingTick {
@@ -17,11 +18,29 @@ public class CubingTick {
 
             @Override
             public void run() {
-                try (SQLConnection cubing = Database.getCubing();
-                     SQLConnection system = Database.getSystem()) {
+                try (SQLConnection cubing = Database.getCubing()) {
                     DatabaseData.champs.clear();
                     cubing.select("id").from("champ").executeResult().forEach(r -> r.forEach(f -> DatabaseData.champs.add(f.getInt())));
-                    DatabaseData.onlineCount = system.select("SUM(onlinecount)").from("proxies").executeResult().getInt();
+                    // Read total player count from Redis (written each tick by each proxy).
+                    // This replaces the old SUM(onlinecount) FROM proxies DB query, giving
+                    // a real-time value without a DB round-trip on every tick.
+                    java.util.List<String> proxyCounts = RedisManager.hvals("sc:proxycounts");
+                    if (!proxyCounts.isEmpty()) {
+                        DatabaseData.onlineCount = proxyCounts
+                                .stream()
+                                .mapToInt(v -> { try { return Integer.parseInt(v); } catch (NumberFormatException ignored) { return 0; } })
+                                .sum();
+                    } else {
+                        Integer dbTotal;
+                        try (SQLConnection system = Database.getSystem()) {
+                            dbTotal = system
+                                    .select("SUM(onlinecount)")
+                                    .from("proxies")
+                                    .executeResult()
+                                    .getInt();
+                        }
+                        DatabaseData.onlineCount = dbTotal == null ? 0 : dbTotal;
+                    }
                     tick++;
                     CubingTickEvent event = new CubingTickEvent(tick);
                     event.call();
