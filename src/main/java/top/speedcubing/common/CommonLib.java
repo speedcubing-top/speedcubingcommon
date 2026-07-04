@@ -20,6 +20,10 @@ public class CommonLib {
         RedisManager.setLogger(logger);
         ServerConfig config = new ServerConfig();
         config.reload(configPath, true);
+        if (!Database.isConnected()) {
+            logger.severe("CommonLib initialization failed: database connection pools are not initialized.");
+            return;
+        }
         CubingEventManager.registerListeners(config);
         CubingEventManager.registerListeners(new NameDb());
         CubingTick.init();

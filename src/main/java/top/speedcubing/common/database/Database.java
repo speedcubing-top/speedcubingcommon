@@ -29,6 +29,9 @@ public class Database {
     }
 
     public static SQLConnection get(String database) {
+        if (dataSourceMap == null) {
+            throw new IllegalStateException("Database connection pools are not initialized. Check the earlier startup log for the database connection failure.");
+        }
         HikariDataSource dataSource = dataSourceMap.get(database);
         if (dataSource == null) {
             throw new IllegalArgumentException("No such database");
@@ -67,6 +70,10 @@ public class Database {
             newDataSourceMap.put(db, dataSource);
         }
         dataSourceMap = newDataSourceMap;
+    }
+
+    public static boolean isConnected() {
+        return dataSourceMap != null && !dataSourceMap.isEmpty();
     }
 
     public static void reloadDataSourceConfig() {
