@@ -219,6 +219,31 @@ public class RedisManager {
         }
     }
 
+    /** Set a string value with an expiry ({@code SETEX key seconds value}). */
+    public static void setex(String key, int seconds, String value) {
+        if (pool == null) return;
+        try (Jedis jedis = pool.getResource()) {
+            jedis.setex(key, seconds, value);
+        } catch (Exception e) {
+            getLogger().warning("[RedisManager] setex failed on key '" + key + "': " + e.getMessage());
+        }
+    }
+
+    /** Return a string value and delete the key. */
+    public static String getdel(String key) {
+        if (pool == null) return null;
+        try (Jedis jedis = pool.getResource()) {
+            String value = jedis.get(key);
+            if (value != null) {
+                jedis.del(key);
+            }
+            return value;
+        } catch (Exception e) {
+            getLogger().warning("[RedisManager] getdel failed on key '" + key + "': " + e.getMessage());
+            return null;
+        }
+    }
+
     /**
      * Publish {@code data} to {@code sc:<target>} and block until the remote
      * side sends a reply or the timeout elapses.
