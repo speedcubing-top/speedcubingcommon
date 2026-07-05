@@ -20,6 +20,19 @@ public class MinecraftProxy implements Writable {
         return proxies.get(name);
     }
 
+    public static synchronized MinecraftProxy getOrCreateRedisProxy(String name) {
+        if (name == null || name.isEmpty()) {
+            return null;
+        }
+
+        MinecraftProxy proxy = getProxy(name);
+        if (proxy != null) {
+            return proxy;
+        }
+
+        return new MinecraftProxy(name, new HostAndPort("127.0.0.1", 0));
+    }
+
     public static MinecraftProxy getProxy(HostAndPort listenerAddress) {
         for (MinecraftProxy s : proxies.values()) {
             if (s.getListenerAddress().equals(listenerAddress)) {
