@@ -5,8 +5,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+
+import com.google.gson.Gson;
 import top.speedcubing.common.database.Database;
 import top.speedcubing.common.io.SocketWriter;
+import top.speedcubing.common.redis.RedisBus;
 import top.speedcubing.lib.utils.SQL.SQLConnection;
 import top.speedcubing.lib.utils.SQL.SQLResult;
 import top.speedcubing.lib.utils.SQL.SQLRow;
@@ -67,6 +70,11 @@ public class MinecraftServer implements Writable {
     @Override
     public CompletableFuture<DataInputStream> write(byte[] data) {
         return SocketWriter.writeResponse(listenerAddress, data);
+    }
+
+    @Override
+    public void redisPublish(String channel, String message) {
+        RedisBus.publish(RedisBus.getChannelPrefix() + ":server:" + name + ":" + channel, message);
     }
 
     public HostAndPort getListenerAddress() {

@@ -8,12 +8,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import top.speedcubing.common.database.Database;
 import top.speedcubing.common.io.SocketWriter;
+import top.speedcubing.common.redis.RedisBus;
 import top.speedcubing.lib.utils.SQL.SQLConnection;
 import top.speedcubing.lib.utils.SQL.SQLResult;
 import top.speedcubing.lib.utils.SQL.SQLRow;
 import top.speedcubing.lib.utils.internet.HostAndPort;
 
-public class MinecraftProxy implements Writable{
+public class MinecraftProxy implements Writable {
     private static volatile Map<String, MinecraftProxy> proxies = new HashMap<>();
 
     public static MinecraftProxy getProxy(String name) {
@@ -65,6 +66,11 @@ public class MinecraftProxy implements Writable{
     @Override
     public CompletableFuture<DataInputStream> write(byte[] data) {
         return SocketWriter.writeResponse(listenerAddress, data);
+    }
+
+    @Override
+    public void redisPublish(String channel, String message) {
+        RedisBus.publish(RedisBus.getChannelPrefix() + ":proxy:" + name + ":" + channel, message);
     }
 
     public HostAndPort getListenerAddress() {

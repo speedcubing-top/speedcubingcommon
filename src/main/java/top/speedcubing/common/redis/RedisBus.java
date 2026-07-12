@@ -1,6 +1,8 @@
 package top.speedcubing.common.redis;
 
 import com.google.gson.JsonObject;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;
@@ -8,6 +10,7 @@ import top.speedcubing.common.CommonLib;
 import top.speedcubing.common.configuration.ServerConfig;
 
 public class RedisBus {
+    private static final Map<String, Consumer<String>> handlers = new ConcurrentHashMap<>();
     private static Thread subscriberThread;
     private static JedisPubSub activeSubscription;
 
@@ -41,7 +44,16 @@ public class RedisBus {
     }
 
     public static synchronized void subscribe(String channel, Consumer<String> consumer) {
-        if (!isEnabled() || subscriberThread != null) {
+        if (!isEnabled()) {
+            return;
+        }
+
+        handlers.put(channel, consumer);
+        startSubscriberIfNeeded();
+    }
+
+    private static synchronized void startSubscriberIfNeeded() {
+        if (handlers.isEmpty() || subscriberThread != null) {
             return;
         }
 
@@ -52,14 +64,15 @@ public class RedisBus {
                     activeSubscription = new JedisPubSub() {
                         @Override
                         public void onMessage(String incomingChannel, String message) {
-                            if (channel.equals(incomingChannel)) {
-                                consumer.accept(message);
+                            Consumer<String> handler = handlers.get(incomingChannel);
+                            if (handler != null) {
+                                handler.accept(message);
                             }
                         }
                     };
-                    jedis.subscribe(activeSubscription, channel);
+                    jedis.subscribe(activeSubscription, handlers.keySet().toArray(new String[0]));
                 } catch (Exception e) {
-                    CommonLib.logger.warning("Redis subscriber for " + channel + " stopped: " + e.getMessage());
+                    CommonLib.logger.warning("Redis subscriber stopped: " + e.getMessage());
                     try {
                         Thread.sleep(2000L);
                     } catch (InterruptedException interruptedException) {
@@ -67,7 +80,7 @@ public class RedisBus {
                     }
                 }
             }
-        }, "redis-sub-" + channel.replace(':', '-'));
+        }, "redis-sub-bus");
         subscriberThread.setDaemon(true);
         subscriberThread.start();
     }
@@ -85,6 +98,7 @@ public class RedisBus {
             subscriberThread.interrupt();
             subscriberThread = null;
         }
+        handlers.clear();
     }
 
     private static JsonObject getRedisConfig() {
@@ -107,7 +121,7 @@ public class RedisBus {
 
     private static void applyAuth(Jedis jedis) {
         JsonObject redis = getRedisConfig();
-        if (redis != null && redis.has("password")) {
+        if (redis != null && redis.has("password") && !redis.get("password").isJsonNull()) {
             String password = redis.get("password").getAsString();
             if (!password.isEmpty()) {
                 jedis.auth(password);
