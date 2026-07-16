@@ -83,7 +83,7 @@ public class Database {
         if (hikariCPConfig.has("validationTimeout"))
             dataSource.setValidationTimeout(hikariCPConfig.get("validationTimeout").getAsLong());
 
-        if (hikariCPConfig.has("idleTimeOut"))
+        if (hikariCPConfig.has("idleTimeout"))
             dataSource.setIdleTimeout(hikariCPConfig.get("idleTimeout").getAsLong());
 
         if (hikariCPConfig.has("leakDetectionThreshold"))
