@@ -6,8 +6,6 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 import top.speedcubing.common.CommonLib;
 import top.speedcubing.common.configuration.ServerConfig;
 import top.speedcubing.lib.utils.SQL.SQLConnection;
@@ -62,8 +60,8 @@ public class Database {
             config.setJdbcUrl(url.replace("%db%", db));
             config.setUsername(user);
             config.setPassword(password);
+            applyDataSourceConfig(config);
             HikariDataSource dataSource = new HikariDataSource(config);
-            reloadDataSourceConfig(dataSource);
             newDataSourceMap.put(db, dataSource);
         }
         dataSourceMap = newDataSourceMap;
@@ -79,6 +77,9 @@ public class Database {
         JsonObject hikariCPConfig = ServerConfig.getConfig().getAsJsonObject("database").getAsJsonObject("hikaricp");
         if (hikariCPConfig.has("connectionTimeout"))
             dataSource.setConnectionTimeout(hikariCPConfig.get("connectionTimeout").getAsLong());
+
+        if (hikariCPConfig.has("keepaliveTime"))
+            dataSource.setKeepaliveTime(hikariCPConfig.get("keepaliveTime").getAsLong());
 
         if (hikariCPConfig.has("validationTimeout"))
             dataSource.setValidationTimeout(hikariCPConfig.get("validationTimeout").getAsLong());
@@ -97,6 +98,33 @@ public class Database {
 
         if (hikariCPConfig.has("minIdle"))
             dataSource.setMinimumIdle(hikariCPConfig.get("minIdle").getAsInt());
+    }
+
+    private static void applyDataSourceConfig(HikariConfig config) {
+        JsonObject hikariCPConfig = ServerConfig.getConfig().getAsJsonObject("database").getAsJsonObject("hikaricp");
+        if (hikariCPConfig.has("connectionTimeout"))
+            config.setConnectionTimeout(hikariCPConfig.get("connectionTimeout").getAsLong());
+
+        if (hikariCPConfig.has("keepaliveTime"))
+            config.setKeepaliveTime(hikariCPConfig.get("keepaliveTime").getAsLong());
+
+        if (hikariCPConfig.has("validationTimeout"))
+            config.setValidationTimeout(hikariCPConfig.get("validationTimeout").getAsLong());
+
+        if (hikariCPConfig.has("idleTimeout"))
+            config.setIdleTimeout(hikariCPConfig.get("idleTimeout").getAsLong());
+
+        if (hikariCPConfig.has("leakDetectionThreshold"))
+            config.setLeakDetectionThreshold(hikariCPConfig.get("leakDetectionThreshold").getAsLong());
+
+        if (hikariCPConfig.has("maxLifetime"))
+            config.setMaxLifetime(hikariCPConfig.get("maxLifetime").getAsLong());
+
+        if (hikariCPConfig.has("maxPoolSize"))
+            config.setMaximumPoolSize(hikariCPConfig.get("maxPoolSize").getAsInt());
+
+        if (hikariCPConfig.has("minIdle"))
+            config.setMinimumIdle(hikariCPConfig.get("minIdle").getAsInt());
     }
 
     public static void closeAllConnections() {
