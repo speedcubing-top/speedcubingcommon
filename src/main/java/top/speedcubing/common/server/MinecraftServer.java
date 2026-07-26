@@ -73,7 +73,15 @@ public class MinecraftServer implements Writable {
     }
 
     @Override
-    public void redisPublish(String channel, String message) {
+    public void redisPublish(String channel, Object obj) {
+        String message;
+        if (obj == null) {
+            message = null;
+        } else if (obj instanceof String s) {
+            message = s;
+        } else {
+            message = new Gson().toJson(obj);
+        }
         RedisBus.publish(RedisBus.getChannelPrefix() + ":server:" + name + ":" + channel, message);
     }
 
