@@ -1,14 +1,27 @@
 package top.speedcubing.common.server;
 
 import com.google.gson.Gson;
+import top.speedcubing.common.database.Database;
 import top.speedcubing.common.io.SocketWriter;
 import top.speedcubing.common.redis.RedisBus;
+import top.speedcubing.lib.utils.SQL.SQLConnection;
+import top.speedcubing.lib.utils.SQL.SQLResult;
 import top.speedcubing.lib.utils.internet.HostAndPort;
 
 import java.io.DataInputStream;
 import java.util.concurrent.CompletableFuture;
 
 public class MinecraftProxy implements Writable {
+
+    public static MinecraftProxy getRandomProxy() {
+        try (SQLConnection connection = Database.getSystem()) {
+            SQLResult result = connection.executeResult("SELECT `name` FROM proxy");
+            if (result.isEmpty()) {
+                return null;
+            }
+            return getProxy(result.get(0).getString(0));
+        }
+    }
 
     public static MinecraftProxy getProxy(String name) {
         return new MinecraftProxy(name);
