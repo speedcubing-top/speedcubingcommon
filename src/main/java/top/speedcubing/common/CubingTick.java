@@ -25,7 +25,7 @@ public class CubingTick {
                     cubing.select("id").from("champ").executeResult().forEach(r -> r.forEach(f -> DatabaseData.champs.add(f.getInt())));
 
                     SQLResult result = system.select("SUM(onlinecount)").from("proxies").executeResult();
-                    if (!result.isEmpty()) {
+                    if (!result.isEmpty() && result.getInt() != null) {
                         DatabaseData.onlineCount = result.getInt();
                     }
                     tick++;
