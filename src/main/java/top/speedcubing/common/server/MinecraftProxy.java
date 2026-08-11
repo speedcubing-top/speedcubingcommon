@@ -15,7 +15,7 @@ public class MinecraftProxy implements Writable {
 
     public static MinecraftProxy getRandomProxy() {
         try (SQLConnection connection = Database.getSystem()) {
-            SQLResult result = connection.executeResult("SELECT `name` FROM proxy");
+            SQLResult result = connection.executeResult("SELECT `name` FROM `proxies`");
             if (result.isEmpty()) {
                 return null;
             }
