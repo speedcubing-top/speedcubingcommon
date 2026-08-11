@@ -43,12 +43,25 @@ public class RedisBus {
         }
     }
 
-    public static synchronized void subscribe(String channel, Consumer<String> consumer) {
+    public static synchronized void subscribe(
+            String channel,
+            Consumer<String> consumer
+    ) {
         if (!isEnabled()) {
             return;
         }
 
         handlers.put(channel, consumer);
+
+        if (activeSubscription != null) {
+            try {
+                activeSubscription.subscribe(channel);
+                return;
+            } catch (Exception e) {
+                CommonLib.logger.warning("Failed to subscribe Redis channel " + channel + ": "+ e.getMessage());
+            }
+        }
+
         startSubscriberIfNeeded();
     }
 
