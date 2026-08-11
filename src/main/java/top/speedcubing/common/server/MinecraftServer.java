@@ -29,7 +29,7 @@ public class MinecraftServer implements Writable {
     public static void loadServers() {
         Map<String, MinecraftServer> newServers = new HashMap<>();
         try (SQLConnection connection = Database.getConfig()) {
-            SQLResult result = connection.select("name,host,port,accept_socket").from("mc_servers").executeResult();
+            SQLResult result = connection.select("name,accept_socket").from("mc_servers").executeResult();
             for (SQLRow r : result) {
                 String name = r.getString("name");
                 boolean accept_socket = r.getBoolean("accept_socket");
