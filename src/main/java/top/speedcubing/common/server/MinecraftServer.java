@@ -1,11 +1,5 @@
 package top.speedcubing.common.server;
 
-import java.io.DataInputStream;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
 import com.google.gson.Gson;
 import top.speedcubing.common.database.Database;
 import top.speedcubing.common.io.SocketWriter;
@@ -15,20 +9,17 @@ import top.speedcubing.lib.utils.SQL.SQLResult;
 import top.speedcubing.lib.utils.SQL.SQLRow;
 import top.speedcubing.lib.utils.internet.HostAndPort;
 
+import java.io.DataInputStream;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 public class MinecraftServer implements Writable {
     private static volatile Map<String, MinecraftServer> servers = new HashMap<>();
 
     public static MinecraftServer getServer(String name) {
         return servers.get(name);
-    }
-
-    public static MinecraftServer getServer(HostAndPort listenerAddress) {
-        for (MinecraftServer s : servers.values()) {
-            if (s.getListenerAddress().equals(listenerAddress)) {
-                return s;
-            }
-        }
-        return null;
     }
 
     public static Collection<MinecraftServer> getServers() {
@@ -41,22 +32,18 @@ public class MinecraftServer implements Writable {
             SQLResult result = connection.select("name,host,port,accept_socket").from("mc_servers").executeResult();
             for (SQLRow r : result) {
                 String name = r.getString("name");
-                String host = r.getString("host");
-                int port = r.getInt("port");
                 boolean accept_socket = r.getBoolean("accept_socket");
-                newServers.put(name, new MinecraftServer(name, new HostAndPort(host, port), accept_socket));
+                newServers.put(name, new MinecraftServer(name, accept_socket));
             }
         }
         servers = newServers;
     }
 
-    private final HostAndPort listenerAddress;
     private final String name;
     private final boolean acceptSocket;
 
-    public MinecraftServer(String name, HostAndPort address, boolean accept_socket) {
+    public MinecraftServer(String name, boolean accept_socket) {
         this.name = name;
-        this.listenerAddress = new HostAndPort(address.getHost(), address.getPort() + 1000);
         this.acceptSocket = accept_socket;
         servers.put(name, this);
     }
@@ -68,8 +55,10 @@ public class MinecraftServer implements Writable {
     }
 
     @Override
+    @Deprecated
+    // TODO
     public CompletableFuture<DataInputStream> write(byte[] data) {
-        return SocketWriter.writeResponse(listenerAddress, data);
+        return SocketWriter.writeResponse(new HostAndPort(name, 26565), data);
     }
 
     @Override
@@ -83,10 +72,6 @@ public class MinecraftServer implements Writable {
             message = new Gson().toJson(obj);
         }
         RedisBus.publish(RedisBus.getChannelPrefix() + ":server:" + name + ":" + channel, message);
-    }
-
-    public HostAndPort getListenerAddress() {
-        return listenerAddress;
     }
 
     public String getName() {
