@@ -2,14 +2,14 @@ package top.speedcubing.common.configuration;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.io.FileReader;
 import top.speedcubing.common.CommonLib;
 import top.speedcubing.common.database.Database;
 import top.speedcubing.common.events.ConfigReloadEvent;
 import top.speedcubing.common.rank.RankLoader;
-import top.speedcubing.common.server.MinecraftProxy;
 import top.speedcubing.common.server.MinecraftServer;
 import top.speedcubing.lib.eventbus.CubingEventHandler;
+
+import java.io.FileReader;
 
 public class ServerConfig {
     private JsonObject config;
@@ -41,7 +41,6 @@ public class ServerConfig {
 
             RankLoader.loadRanks();
             MinecraftServer.loadServers();
-            MinecraftProxy.loadProxies();
         } catch (Exception exception) {
             exception.printStackTrace();
         }
