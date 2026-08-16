@@ -20,7 +20,7 @@ public class ServerConfig {
         instance = this;
     }
 
-    public ServerConfig getInstance() {
+    public static ServerConfig getInstance() {
         return instance;
     }
 
