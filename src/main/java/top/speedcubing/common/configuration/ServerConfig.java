@@ -20,6 +20,10 @@ public class ServerConfig {
         instance = this;
     }
 
+    public ServerConfig getInstance() {
+        return instance;
+    }
+
     public static JsonObject getConfig() {
         return instance.config;
     }
@@ -29,7 +33,11 @@ public class ServerConfig {
         reload(init);
     }
 
-    public void reload(boolean init) {
+    public void reload() {
+        reload(false);
+    }
+
+    private void reload(boolean init) {
         try (FileReader reader = new FileReader(configPath)) {
             CommonLib.logger.info("loading common config");
             config = JsonParser.parseReader(reader).getAsJsonObject();
