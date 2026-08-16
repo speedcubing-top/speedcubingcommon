@@ -50,7 +50,8 @@ public class MinecraftServer implements Writable {
 
     public int getPlayerCount() {
         try (SQLConnection connection = Database.getSystem()) {
-            return connection.select("SUM(onlinecount)").from("stat_onlinecount").where("server='" + name + "'").executeResult().getInt();
+            Integer i = connection.select("SUM(onlinecount)").from("stat_onlinecount").where("server='" + name + "'").executeResult().getInt();;
+            return i == null ? 0 : i;
         }
     }
 
