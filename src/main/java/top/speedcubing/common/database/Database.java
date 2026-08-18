@@ -52,12 +52,13 @@ public class Database {
         String[] databases = {"sc_config", "speedcubing", "speedcubingsystem"};
         JsonObject dbConfig = ServerConfig.getConfig().getAsJsonObject("database");
         String url = dbConfig.get("url").getAsString();
+        String host = dbConfig.get("host").getAsString();
         String user = dbConfig.get("user").getAsString();
         String password = dbConfig.get("password").getAsString();
         Map<String, HikariDataSource> newDataSourceMap = new HashMap<>();
         for (String db : databases) {
             HikariConfig config = new HikariConfig();
-            config.setJdbcUrl(url.replace("%db%", db));
+            config.setJdbcUrl(url.replace("%host%", host).replace("%db%", db));
             config.setUsername(user);
             config.setPassword(password);
             applyDataSourceConfig(config);
