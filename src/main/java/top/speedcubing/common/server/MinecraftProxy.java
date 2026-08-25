@@ -33,6 +33,10 @@ public class MinecraftProxy implements Writable {
         this.name = name;
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public CompletableFuture<DataInputStream> write(byte[] data) {
         return SocketWriter.writeResponse(new HostAndPort(name, 26565), data);
