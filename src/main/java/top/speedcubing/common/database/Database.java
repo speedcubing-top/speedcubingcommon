@@ -70,35 +70,8 @@ public class Database {
 
     public static void reloadDataSourceConfig() {
         for (HikariDataSource dataSource : dataSourceMap.values()) {
-            reloadDataSourceConfig(dataSource);
+            applyDataSourceConfig(dataSource);
         }
-    }
-
-    public static void reloadDataSourceConfig(HikariDataSource dataSource) {
-        JsonObject hikariCPConfig = ServerConfig.getConfig().getAsJsonObject("database").getAsJsonObject("hikaricp");
-        if (hikariCPConfig.has("connectionTimeout"))
-            dataSource.setConnectionTimeout(hikariCPConfig.get("connectionTimeout").getAsLong());
-
-        if (hikariCPConfig.has("keepaliveTime"))
-            dataSource.setKeepaliveTime(hikariCPConfig.get("keepaliveTime").getAsLong());
-
-        if (hikariCPConfig.has("validationTimeout"))
-            dataSource.setValidationTimeout(hikariCPConfig.get("validationTimeout").getAsLong());
-
-        if (hikariCPConfig.has("idleTimeout"))
-            dataSource.setIdleTimeout(hikariCPConfig.get("idleTimeout").getAsLong());
-
-        if (hikariCPConfig.has("leakDetectionThreshold"))
-            dataSource.setLeakDetectionThreshold(hikariCPConfig.get("leakDetectionThreshold").getAsLong());
-
-        if (hikariCPConfig.has("maxLifetime"))
-            dataSource.setMaxLifetime(hikariCPConfig.get("maxLifetime").getAsLong());
-
-        if (hikariCPConfig.has("maxPoolSize"))
-            dataSource.setMaximumPoolSize(hikariCPConfig.get("maxPoolSize").getAsInt());
-
-        if (hikariCPConfig.has("minIdle"))
-            dataSource.setMinimumIdle(hikariCPConfig.get("minIdle").getAsInt());
     }
 
     private static void applyDataSourceConfig(HikariConfig config) {
