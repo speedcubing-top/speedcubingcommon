@@ -6,6 +6,9 @@ import top.speedcubing.common.events.CubingTickEvent;
 import top.speedcubing.lib.utils.SQL.SQLConnection;
 import top.speedcubing.lib.utils.SQL.SQLResult;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -21,8 +24,9 @@ public class CubingTick {
             public void run() {
                 try (SQLConnection cubing = Database.getCubing();
                      SQLConnection system = Database.getSystem()) {
-                    DatabaseData.champs.clear();
-                    cubing.select("id").from("champ").executeResult().forEach(r -> r.forEach(f -> DatabaseData.champs.add(f.getInt())));
+                    Set<Integer> champs = new HashSet<>();
+                    cubing.select("id").from("champ").executeResult().forEach(r -> r.forEach(f -> champs.add(f.getInt())));
+                    DatabaseData.champs = Collections.unmodifiableSet(champs);
 
                     SQLResult result = system.select("SUM(onlinecount)").from("proxies").executeResult();
                     if (!result.isEmpty() && result.getInt() != null) {
