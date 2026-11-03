@@ -63,6 +63,7 @@ public class JoinedPlayer extends MinecraftPlayer {
 
     public void dbUpdate(SQLConnection connection, String field) {
         connection.update("playersdata", field, "id=" + this.id);
+        PlayerCache.invalidateForUpdate(uuid, field);
     }
 
 

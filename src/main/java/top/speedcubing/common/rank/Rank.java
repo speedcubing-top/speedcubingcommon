@@ -2,7 +2,9 @@ package top.speedcubing.common.rank;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.StringJoiner;
 import top.speedcubing.common.database.Database;
 import top.speedcubing.common.database.DatabaseData;
 import top.speedcubing.lib.utils.SQL.SQLConnection;
@@ -75,6 +77,37 @@ public class Rank {
         }
 
         return calculatePeriodRank(dbRank, id);
+    }
+
+    /**
+     * Effective rank for many (possibly offline) players with one periodrank query, e.g. for leaderboards.
+     * dbRanks maps player id to playersdata.priority; same rules as {@link #resolve}.
+     */
+    public static Map<Integer, String> resolveAll(Map<Integer, String> dbRanks) {
+        Map<Integer, String> result = new HashMap<>(dbRanks);
+        StringJoiner ids = new StringJoiner(",");
+        for (Map.Entry<Integer, String> e : dbRanks.entrySet()) {
+            if (e.getValue().equals("default") && DatabaseData.champs.contains(e.getKey()))
+                result.put(e.getKey(), "champ");
+            else
+                ids.add(Integer.toString(e.getKey()));
+        }
+        if (ids.length() == 0)
+            return result;
+
+        long now = SystemUtils.getCurrentSecond();
+        Set<Integer> seen = new HashSet<>();
+        try (SQLConnection connection = Database.getCubing()) {
+            SQLResult rows = connection.select("id,priority,at,duration").from("periodrank").where("id IN (" + ids + ")").orderBy("at DESC").executeResult();
+            for (SQLRow r : rows) {
+                int id = r.getInt("id");
+                if (!seen.add(id))
+                    continue; // only the latest row per player counts
+                if (now < (long) r.getInt("at") + r.getInt("duration"))
+                    result.put(id, r.getString("priority"));
+            }
+        }
+        return result;
     }
 
     private static Resolved calculatePeriodRank(String dbRank, int id) {

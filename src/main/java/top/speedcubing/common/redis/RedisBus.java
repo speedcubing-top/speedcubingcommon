@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.JedisPubSub;
 import top.speedcubing.common.CommonLib;
 import top.speedcubing.common.configuration.ServerConfig;
@@ -112,6 +114,31 @@ public class RedisBus {
             subscriberThread = null;
         }
         handlers.clear();
+        if (pool != null) {
+            pool.close();
+            pool = null;
+        }
+    }
+
+    private static JedisPool pool;
+
+    /**
+     * Pooled connection for regular commands (not pub/sub); close it after use (try-with-resources).
+     * Returns null if Redis is disabled.
+     */
+    public static Jedis resource() {
+        if (!isEnabled())
+            return null;
+        JedisPool p;
+        synchronized (RedisBus.class) {
+            if (pool == null) {
+                JsonObject redis = getRedisConfig();
+                String password = redis != null && redis.has("password") && !redis.get("password").isJsonNull() ? redis.get("password").getAsString() : null;
+                pool = new JedisPool(new JedisPoolConfig(), getHost(), getPort(), 2000, password == null || password.isEmpty() ? null : password);
+            }
+            p = pool;
+        }
+        return p.getResource();
     }
 
     private static JsonObject getRedisConfig() {
