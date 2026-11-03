@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.StringJoiner;
 import top.speedcubing.common.database.Database;
 import top.speedcubing.common.database.DatabaseData;
+import top.speedcubing.common.profiler.Profiler;
 import top.speedcubing.lib.utils.SQL.SQLConnection;
 import top.speedcubing.lib.utils.SQL.SQLResult;
 import top.speedcubing.lib.utils.SQL.SQLRow;
@@ -71,6 +72,12 @@ public class Rank {
     }
 
     public static Resolved resolve(String dbRank, int id) {
+        try (Profiler.Timer t = Profiler.timer("rank.resolve")) {
+            return resolveUntimed(dbRank, id);
+        }
+    }
+
+    private static Resolved resolveUntimed(String dbRank, int id) {
         //default, champ
         if (dbRank.equals("default") && DatabaseData.champs.contains(id)) {
             return new Resolved("champ", 0);

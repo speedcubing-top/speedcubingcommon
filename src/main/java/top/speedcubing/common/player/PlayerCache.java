@@ -18,6 +18,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Transaction;
 import top.speedcubing.common.CommonLib;
 import top.speedcubing.common.database.DatabaseData;
+import top.speedcubing.common.profiler.Profiler;
 import top.speedcubing.common.rank.Rank;
 import top.speedcubing.common.redis.RedisBus;
 import top.speedcubing.lib.utils.SQL.SQLField;
@@ -43,7 +44,7 @@ public class PlayerCache {
     }
 
     public static void put(UUID uuid, SQLRow data, SQLRow onlinePlayer, Rank.Resolved rank) {
-        try (Jedis jedis = RedisBus.resource()) {
+        try (Profiler.Timer timer = Profiler.timer("cache.put"); Jedis jedis = RedisBus.resource()) {
             if (jedis == null)
                 return;
             Map<String, String> fields = new HashMap<>();
@@ -64,6 +65,15 @@ public class PlayerCache {
 
     /** Cached entry, or null on a miss; also a miss when the cached rank may be outdated (champ change, period end). */
     public static Entry get(UUID uuid) {
+        Entry entry;
+        try (Profiler.Timer t = Profiler.timer("cache.get")) {
+            entry = lookup(uuid);
+        }
+        Profiler.count(entry == null ? "cache.miss" : "cache.hit");
+        return entry;
+    }
+
+    private static Entry lookup(UUID uuid) {
         try (Jedis jedis = RedisBus.resource()) {
             if (jedis == null)
                 return null;

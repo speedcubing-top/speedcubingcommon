@@ -3,9 +3,13 @@ package top.speedcubing.common.database;
 import com.google.gson.JsonObject;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import top.speedcubing.common.player.JoinedPlayer;
+import top.speedcubing.common.profiler.Profiler;
 import top.speedcubing.common.CommonLib;
 import top.speedcubing.common.configuration.ServerConfig;
 import top.speedcubing.lib.utils.SQL.SQLConnection;
@@ -32,12 +36,45 @@ public class Database {
             throw new IllegalArgumentException("No such database");
         }
 
+        long start = System.nanoTime();
         try {
-            return new SQLConnection(dataSource.getConnection());
+            Connection connection = dataSource.getConnection();
+            Profiler.record("db.acquire " + database, System.nanoTime() - start);
+            return new ProfiledSQLConnection(connection, callerName());
         } catch (SQLException e) {
+            Profiler.record("db.acquire.failed " + database, System.nanoTime() - start);
             e.printStackTrace();
         }
         return null;
+    }
+
+    // generic helpers are skipped so the report names the code that actually wanted the connection
+    private static final Set<String> HELPER_CLASSES = Set.of(Database.class.getName(), JoinedPlayer.class.getName(), "top.speedcubing.common.rank.IDPlayer");
+    private static final StackWalker WALKER = StackWalker.getInstance();
+
+    private static String callerName() {
+        return WALKER.walk(frames -> frames
+                .filter(f -> !HELPER_CLASSES.contains(f.getClassName()))
+                .findFirst()
+                .map(f -> f.getClassName().substring(f.getClassName().lastIndexOf('.') + 1) + "." + f.getMethodName())
+                .orElse("?"));
+    }
+
+    /** Records how long each caller holds a pooled connection (query time + anything else done while holding it). */
+    private static final class ProfiledSQLConnection extends SQLConnection {
+        private final long acquired = System.nanoTime();
+        private final String caller;
+
+        ProfiledSQLConnection(Connection connection, String caller) {
+            super(connection);
+            this.caller = caller;
+        }
+
+        @Override
+        public void close() {
+            Profiler.record("db.hold " + caller, System.nanoTime() - acquired);
+            super.close();
+        }
     }
 
     public static void connect() {
