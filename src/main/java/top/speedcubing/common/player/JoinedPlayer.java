@@ -15,7 +15,7 @@ public class JoinedPlayer extends MinecraftPlayer {
     public String displayName;
     public int lang;
     public final String timeZone;
-    public final boolean isStaff;
+    public boolean isStaff;
 
     // offline
     public JoinedPlayer(UUID uuid, SQLRow r) {

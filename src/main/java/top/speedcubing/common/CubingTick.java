@@ -2,6 +2,7 @@ package top.speedcubing.common;
 
 import top.speedcubing.common.database.Database;
 import top.speedcubing.common.database.DatabaseData;
+import top.speedcubing.common.events.ChampsChangedEvent;
 import top.speedcubing.common.events.CubingTickEvent;
 import top.speedcubing.lib.utils.SQL.SQLConnection;
 import top.speedcubing.lib.utils.SQL.SQLResult;
@@ -26,7 +27,18 @@ public class CubingTick {
                      SQLConnection system = Database.getSystem()) {
                     Set<Integer> champs = new HashSet<>();
                     cubing.select("id").from("champ").executeResult().forEach(r -> r.forEach(f -> champs.add(f.getInt())));
+                    Set<Integer> previous = DatabaseData.champs;
                     DatabaseData.champs = Collections.unmodifiableSet(champs);
+
+                    // gained or lost champ since the last tick
+                    Set<Integer> changed = new HashSet<>(champs);
+                    changed.addAll(previous);
+                    Set<Integer> unchanged = new HashSet<>(champs);
+                    unchanged.retainAll(previous);
+                    changed.removeAll(unchanged);
+                    if (!changed.isEmpty()) {
+                        new ChampsChangedEvent(Collections.unmodifiableSet(changed)).call();
+                    }
 
                     SQLResult result = system.select("SUM(onlinecount)").from("proxies").executeResult();
                     if (!result.isEmpty() && result.getInt() != null) {

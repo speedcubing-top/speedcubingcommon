@@ -56,29 +56,42 @@ public class Rank {
       database priority, player id
     */
 
+    /**
+     * Effective rank of a player plus when it stops being valid.
+     * expiresAt is a unix second when an active period rank ends, 0 if the result has no scheduled expiry.
+     * Champ status can change at any time; callers learn about that through ChampsChangedEvent.
+     */
+    public record Resolved(String rank, long expiresAt) {
+    }
+
     public static String getRank(String dbRank, int id) {
+        return resolve(dbRank, id).rank();
+    }
+
+    public static Resolved resolve(String dbRank, int id) {
         //default, champ
         if (dbRank.equals("default") && DatabaseData.champs.contains(id)) {
-            return "champ";
+            return new Resolved("champ", 0);
         }
 
         return calculatePeriodRank(dbRank, id);
     }
 
-    private static String calculatePeriodRank(String dbRank, int id) {
+    private static Resolved calculatePeriodRank(String dbRank, int id) {
         try (SQLConnection connection = Database.getCubing()) {
             SQLRow data = connection.select("priority,at,duration").from("periodrank").where("id=" + id).orderBy("at DESC").limit(0, 1).executeResult().get(0);
 
             if (data == null) {
-                return dbRank;
+                return new Resolved(dbRank, 0);
             }
 
             //unit. second
-            if ((SystemUtils.getCurrentSecond() - data.getInt("at")) < data.getInt("duration")) {
-                return data.getString("priority");
+            long end = (long) data.getInt("at") + data.getInt("duration");
+            if (SystemUtils.getCurrentSecond() < end) {
+                return new Resolved(data.getString("priority"), end);
             }
 
-            return dbRank;
+            return new Resolved(dbRank, 0);
         }
     }
 
