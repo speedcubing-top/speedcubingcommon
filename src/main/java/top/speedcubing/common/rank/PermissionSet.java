@@ -17,7 +17,7 @@ import top.speedcubing.lib.utils.SQL.SQLRow;
 public class PermissionSet {
 
     public static Pattern regex = Pattern.compile("^group\\.[^|*.]+$");
-    public static HashMap<String, PermissionSet> sets = new HashMap<>();
+    public static volatile HashMap<String, PermissionSet> sets = new HashMap<>();
 
     private final String name;
     private final Set<String> permissions = new HashSet<>();
@@ -53,7 +53,10 @@ public class PermissionSet {
 
     public void update() {
         try (SQLConnection connection = Database.getConfig()) {
-            connection.update("mc_permsets", "perms=\"" + getPermString() + "\"", "name=\"" + name + "\"");
+            connection.prepare("UPDATE mc_permsets SET perms=? WHERE name=?")
+                    .setString(1, getPermString())
+                    .setString(2, name)
+                    .execute();
         }
     }
 
@@ -72,38 +75,51 @@ public class PermissionSet {
 
     //utils
 
+    /**
+     * Groups are referenced in rank permissions as "group.&lt;name&gt;" and stored in mc_permsets as the bare name;
+     * every entry point accepts either form.
+     */
+    private static String key(String name) {
+        return name.startsWith("group.") ? name.substring(6) : name;
+    }
+
     public static void reload() {
+        // build a fresh map and swap it in, so groups deleted on another node disappear here too
+        HashMap<String, PermissionSet> loaded = new HashMap<>();
         try (SQLConnection connection = Database.getConfig()) {
             SQLResult result = connection.select("name,perms").from("mc_permsets").executeResult();
             for (SQLRow r : result) {
-                PermissionSet.sets.put(r.getString("name"), new PermissionSet(r.getString("name"), r.getString("perms")));
+                loaded.put(r.getString("name"), new PermissionSet(r.getString("name"), r.getString("perms")));
             }
         }
+        sets = loaded;
     }
 
     public static PermissionSet get(String name) {
-        return sets.get(name);
+        return sets.get(key(name));
     }
 
     public static boolean create(String name) {
-        if (sets.containsKey(name) || !regex.matcher(name).matches()) {
+        if (!regex.matcher(name).matches() || sets.containsKey(key(name))) {
             return false;
         }
-        sets.put(name, new PermissionSet(name));
+        String key = key(name);
         try (SQLConnection connection = Database.getConfig()) {
-            connection.insert("mc_permsets", "name", name);
+            connection.prepare("INSERT INTO mc_permsets (name, perms) VALUES (?, '')").setString(1, key).execute();
         }
+        sets.put(key, new PermissionSet(key));
         return true;
     }
 
     public static boolean delete(String name) {
-        if (!sets.containsKey(name) || !regex.matcher(name).matches()) {
+        if (!regex.matcher(name).matches() || !sets.containsKey(key(name))) {
             return false;
         }
-        sets.remove(name);
+        String key = key(name);
         try (SQLConnection connection = Database.getConfig()) {
-            connection.delete("mc_permsets", "name=\"" + name + "\"");
+            connection.prepare("DELETE FROM mc_permsets WHERE name=?").setString(1, key).execute();
         }
+        sets.remove(key);
         return true;
     }
 
@@ -116,7 +132,7 @@ public class PermissionSet {
             if (!regex.matcher(s).matches()) {
                 continue;
             }
-            PermissionSet set = sets.get(s.substring(6));
+            PermissionSet set = sets.get(key(s));
             if (set != null) {
                 iterator.remove();
                 toAdd.addAll(set.getPerms());
