@@ -45,7 +45,6 @@ public class MinecraftServer implements Writable {
     public MinecraftServer(String name, boolean accept_socket) {
         this.name = name;
         this.acceptSocket = accept_socket;
-        servers.put(name, this);
     }
 
     public int getPlayerCount() {

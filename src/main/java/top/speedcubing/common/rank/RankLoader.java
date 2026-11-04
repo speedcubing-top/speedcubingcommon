@@ -2,8 +2,10 @@ package top.speedcubing.common.rank;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import top.speedcubing.common.database.Database;
 import top.speedcubing.lib.utils.SQL.SQLConnection;
@@ -16,8 +18,7 @@ public class RankLoader {
     //utils
 
     public static void loadRanks() {
-        Rank.rankByName.clear();
-
+        Map<String, Rank> newRankByName = new HashMap<>();
         List<Rank> rankByOrder = new ArrayList<>();
 
         //ranks
@@ -32,7 +33,7 @@ public class RankLoader {
                 Set<String> perms = new HashSet<>(Arrays.asList(r.getString("perms").split("\\|")));
 
                 Rank rank = new Rank(name, weight, prefix, chatColor, discord, perms);
-                Rank.rankByName.put(name, rank);
+                newRankByName.put(name, rank);
                 rankByOrder.add(rank);
             }
         }
@@ -46,5 +47,8 @@ public class RankLoader {
         for (int i = 0; i < rankByOrder.size(); i++) {
             rankByOrder.get(i).orderCode = i;
         }
+
+        // publish only after orderCode is set; readers never see a partial map
+        Rank.rankByName = newRankByName;
     }
 }

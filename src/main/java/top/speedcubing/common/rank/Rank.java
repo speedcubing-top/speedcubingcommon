@@ -15,7 +15,7 @@ import top.speedcubing.lib.utils.SystemUtils;
 
 public class Rank {
 
-    public static Map<String, Rank> rankByName = new HashMap<>();
+    public static volatile Map<String, Rank> rankByName = new HashMap<>();
 
     private final String rank;
     private final int weight;
