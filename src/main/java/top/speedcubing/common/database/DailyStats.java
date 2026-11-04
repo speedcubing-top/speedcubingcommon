@@ -1,6 +1,7 @@
 package top.speedcubing.common.database;
 
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import top.speedcubing.lib.utils.SQL.SQLConnection;
@@ -15,7 +16,12 @@ public class DailyStats {
                     connection.executeUpdate("INSERT INTO daily (date) VALUES (" + today + ") ");
                 } catch (SQLRuntimeException ignored) {
                 }
-                connection.executeQuery("SELECT playtime FROM daily WHERE date=" + today + " FOR UPDATE");
+                try {
+                    // only takes the row lock (held until commit); close the statement and its result set right away
+                    connection.executeQuery("SELECT playtime FROM daily WHERE date=" + today + " FOR UPDATE").getStatement().close();
+                } catch (SQLException e) {
+                    throw new SQLRuntimeException(e);
+                }
                 connection.executeUpdate("UPDATE daily SET " + s + " WHERE date=" + today);
             });
         }

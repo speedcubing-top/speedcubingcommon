@@ -13,6 +13,7 @@ import top.speedcubing.common.profiler.Profiler;
 import top.speedcubing.common.CommonLib;
 import top.speedcubing.common.configuration.ServerConfig;
 import top.speedcubing.lib.utils.SQL.SQLConnection;
+import top.speedcubing.lib.utils.SQL.SQLRuntimeException;
 
 public class Database {
 
@@ -30,8 +31,13 @@ public class Database {
         return get("sc_config");
     }
 
+    /** Never returns null: throws if the database was never connected or no pooled connection could be acquired. */
     public static SQLConnection get(String database) {
-        HikariDataSource dataSource = dataSourceMap.get(database);
+        Map<String, HikariDataSource> dataSources = dataSourceMap;
+        if (dataSources == null) {
+            throw new IllegalStateException("Database is not connected");
+        }
+        HikariDataSource dataSource = dataSources.get(database);
         if (dataSource == null) {
             throw new IllegalArgumentException("No such database");
         }
@@ -43,9 +49,8 @@ public class Database {
             return new ProfiledSQLConnection(connection, callerName());
         } catch (SQLException e) {
             Profiler.record("db.acquire.failed " + database, System.nanoTime() - start);
-            e.printStackTrace();
+            throw new SQLRuntimeException(e);
         }
-        return null;
     }
 
     // generic helpers are skipped so the report names the code that actually wanted the connection
@@ -106,7 +111,10 @@ public class Database {
     }
 
     public static void reloadDataSourceConfig() {
-        for (HikariDataSource dataSource : dataSourceMap.values()) {
+        Map<String, HikariDataSource> dataSources = dataSourceMap;
+        if (dataSources == null) // initial connect failed
+            return;
+        for (HikariDataSource dataSource : dataSources.values()) {
             applyDataSourceConfig(dataSource);
         }
     }
@@ -139,7 +147,10 @@ public class Database {
     }
 
     public static void closeAllConnections() {
-        for (Map.Entry<String, HikariDataSource> entry : dataSourceMap.entrySet()) {
+        Map<String, HikariDataSource> dataSources = dataSourceMap;
+        if (dataSources == null) // initial connect failed
+            return;
+        for (Map.Entry<String, HikariDataSource> entry : dataSources.entrySet()) {
             String dbName = entry.getKey();
             HikariDataSource dataSource = entry.getValue();
             try {
@@ -151,6 +162,6 @@ public class Database {
                 CommonLib.logger.warning("Failed to close connection pool for database: " + dbName + " - " + e.getMessage());
             }
         }
-        dataSourceMap.clear();
+        dataSources.clear();
     }
 }
