@@ -51,7 +51,7 @@ public class CubingTick {
                     Profiler.record("tick.common.db", System.nanoTime() - start);
                     CubingTickEvent event = new CubingTickEvent(tick);
                     event.call();
-                } catch (Exception e) {
+                } catch (Throwable e) { // anything escaping run() cancels the timer for good
                     e.printStackTrace();
                 }
                 // whole tick including every service's CubingTickEvent handlers
