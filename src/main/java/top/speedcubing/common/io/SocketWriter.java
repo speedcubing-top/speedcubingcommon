@@ -16,6 +16,7 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.CompletableFuture;
 import top.speedcubing.lib.utils.internet.HostAndPort;
 
@@ -33,7 +34,7 @@ public class SocketWriter {
                     @Override
                     protected void initChannel(SocketChannel ch) {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast(new LengthFieldBasedFrameDecoder(1024, 0, 4, 0, 4));
+                        pipeline.addLast(new LengthFieldBasedFrameDecoder(1024 * 1024, 0, 4, 0, 4)); // same limit as SocketReader
                         pipeline.addLast(new LengthFieldPrepender(4));
                         pipeline.addLast(new SimpleChannelInboundHandler<ByteBuf>() {
                             @Override
@@ -49,13 +50,25 @@ public class SocketWriter {
                                 futureResponse.completeExceptionally(cause);
                                 ctx.close();
                             }
+
+                            @Override
+                            public void channelInactive(ChannelHandlerContext ctx) {
+                                // peer closed without answering; no-op if the response already completed the future
+                                futureResponse.completeExceptionally(new ClosedChannelException());
+                                ctx.fireChannelInactive();
+                            }
                         });
                     }
                 });
 
         b.connect(hostPort.getHost(), hostPort.getPort()).addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
-                future.channel().writeAndFlush(Unpooled.wrappedBuffer(data));
+                future.channel().writeAndFlush(Unpooled.wrappedBuffer(data)).addListener((ChannelFutureListener) write -> {
+                    if (!write.isSuccess()) {
+                        futureResponse.completeExceptionally(write.cause());
+                        write.channel().close();
+                    }
+                });
             } else {
                 futureResponse.completeExceptionally(future.cause());
             }

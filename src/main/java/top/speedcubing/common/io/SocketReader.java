@@ -78,8 +78,16 @@ public class SocketReader {
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
+                ctx.close(); // no response is coming; let the writer's future fail instead of waiting forever
             }
             IOUtils.closeQuietly(in, data);
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+            // e.g. an oversized frame or a failing read: close so the writer's future fails instead of waiting forever
+            cause.printStackTrace();
+            ctx.close();
         }
     }
 }
