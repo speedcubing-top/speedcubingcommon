@@ -3,6 +3,9 @@ package top.speedcubing.common.redis;
 import com.google.gson.JsonObject;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -14,7 +17,11 @@ import top.speedcubing.common.configuration.ServerConfig;
 public class RedisBus {
     private static final Map<String, Consumer<String>> handlers = new ConcurrentHashMap<>();
     private static Thread subscriberThread;
-    private static JedisPubSub activeSubscription;
+    private static volatile JedisPubSub activeSubscription;
+    // set when a live subscribe failed; the subscriber re-subscribes every channel on its next subscribe confirmation
+    private static volatile boolean resubscribeNeeded;
+    // one thread keeps messages in publish order and off the caller's (main) thread; idles out when unused
+    private static final ThreadPoolExecutor publisher = createPublisher();
 
     private RedisBus() {
     }
@@ -37,12 +44,25 @@ public class RedisBus {
             return;
         }
 
-        try (Jedis jedis = new Jedis(getHost(), getPort())) {
-            applyAuth(jedis);
-            jedis.publish(channel, message);
-        } catch (Exception e) {
-            CommonLib.logger.warning("Failed to publish Redis message to " + channel + ": " + e.getMessage());
-        }
+        publisher.execute(() -> {
+            try (Jedis jedis = resource()) {
+                if (jedis != null) {
+                    jedis.publish(channel, message);
+                }
+            } catch (Exception e) {
+                CommonLib.logger.warning("Failed to publish Redis message to " + channel + ": " + e.getMessage());
+            }
+        });
+    }
+
+    private static ThreadPoolExecutor createPublisher() {
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 30L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), r -> {
+            Thread thread = new Thread(r, "redis-publish");
+            thread.setDaemon(true);
+            return thread;
+        });
+        executor.allowCoreThreadTimeOut(true);
+        return executor;
     }
 
     public static synchronized void subscribe(
@@ -61,6 +81,7 @@ public class RedisBus {
                 return;
             } catch (Exception e) {
                 CommonLib.logger.warning("Failed to subscribe Redis channel " + channel + ": "+ e.getMessage());
+                resubscribeNeeded = true;
             }
         }
 
@@ -84,6 +105,14 @@ public class RedisBus {
                                 handler.accept(message);
                             }
                         }
+
+                        @Override
+                        public void onSubscribe(String channel, int subscribedChannels) {
+                            if (resubscribeNeeded) {
+                                resubscribeNeeded = false;
+                                this.subscribe(handlers.keySet().toArray(new String[0]));
+                            }
+                        }
                     };
                     jedis.subscribe(activeSubscription, handlers.keySet().toArray(new String[0]));
                 } catch (Exception e) {
@@ -100,7 +129,21 @@ public class RedisBus {
         subscriberThread.start();
     }
 
-    public static synchronized void shutdown() {
+    public static void shutdown() {
+        // let messages published during shutdown (e.g. sending players away) go out before the pool closes;
+        // not under the class lock, the publisher needs it in resource()
+        try {
+            publisher.submit(() -> {
+            }).get(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            CommonLib.logger.warning("Redis publish queue not drained: " + e);
+        }
+        stop();
+    }
+
+    private static synchronized void stop() {
         if (activeSubscription != null) {
             try {
                 activeSubscription.unsubscribe();
