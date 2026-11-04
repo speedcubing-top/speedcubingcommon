@@ -143,6 +143,18 @@ public class Rank {
         return rankByName.get(getRank(rank, id)).getFormat();
     }
 
+    /** Whether a nick may show nickRank for a player whose real rank is realRank: only ranks at or below their own. */
+    public static boolean canDisplayAsNick(String nickRank, String realRank) {
+        Rank target = nickRank == null ? null : rankByName.get(nickRank);
+        Rank own = realRank == null ? null : rankByName.get(realRank);
+        return target != null && own != null && target.getWeight() <= own.getWeight();
+    }
+
+    /** The stored nick rank if still allowed (it may predate a rank change or an old exploit), otherwise default. */
+    public static String nickRankOrDefault(String nickRank, String realRank) {
+        return canDisplayAsNick(nickRank, realRank) ? nickRank : "default";
+    }
+
     public static boolean isStaff(String realRank) {
         return realRank.equals("builder") || realRank.equals("helper") || realRank.equals("admin") || realRank.equals("owner") || realRank.equals("mod") || realRank.equals("developer");
     }
