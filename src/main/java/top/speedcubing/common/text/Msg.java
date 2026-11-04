@@ -37,6 +37,7 @@ public final class Msg {
     public static final String PERMS = prefix("Perms", 'b');
     public static final String COINS = prefix("Coins", 'e');
     public static final String REPORT = prefix("Report", 'c');
+    public static final String STAFF = prefix("Staff", '4');
     public static final String FRIEND = prefix("Friend", 'e');
     public static final String GUILD = prefix("Guild", '2');
     public static final String IGNORE = prefix("Ignore", 'b');
