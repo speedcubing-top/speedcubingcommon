@@ -1,0 +1,197 @@
+# Chat filter list: English and other Latin-script languages.
+# Format: <tier> <mode> <term> [# note]
+#   tier: allow | mask | block
+#   mode: word (must not touch a letter/digit on either side) | sub (anywhere)
+# Terms are plain lowercase; the engine normalizes them exactly like
+# messages (leet, look-alikes, stretched letters like fuuuck), so do not add
+# spelling variants that only differ by those rules.
+# Mild swearing, everyday insults and neutral identity words are allowed on
+# purpose and must not be listed here.
+
+# block: never delivered, staff notified
+block word kys # harassment
+block word kill yourself # harassment
+block word kill urself # harassment
+block sub killyourself # harassment
+block sub killurself # harassment
+block word td # political
+block sub nigger # slur: racial
+block word nigga # slur: racial
+block word niggas # slur: racial
+block word niggaz # slur: racial
+block word niggah # slur: racial
+block word nigguh # slur: racial
+block word niglet # slur: racial
+block word nignog # slur: racial
+block word chink # slur: racial
+block word chinks # slur: racial
+block word chinky # slur: racial
+block sub chingchong # slur: racial
+block word chinaman # slur: racial
+block word gook # slur: racial
+block word gooks # slur: racial
+block sub zipperhead # slur: racial
+block sub slanteye # slur: racial
+block word jap # slur: racial
+block word japs # slur: racial
+block word kike # slur: racial
+block word kikes # slur: racial
+block word kyke # slur: racial
+block word jewboy # slur: racial
+block word spic # slur: racial
+block word spics # slur: racial
+block sub wetback # slur: racial
+block word beaner # slur: racial
+block word beaners # slur: racial
+block word coon # slur: racial
+block word coons # slur: racial
+block word paki # slur: racial
+block word pakis # slur: racial
+block sub raghead # slur: racial
+block sub towelhead # slur: racial
+block sub cameljockey # slur: racial
+block sub currymuncher # slur: racial
+block word darkie # slur: racial
+block word darkies # slur: racial
+block word darky # slur: racial
+block sub junglebunny # slur: racial
+block sub porchmonkey # slur: racial
+block sub jigaboo # slur: racial
+block sub golliwog # slur: racial
+block sub spearchucker # slur: racial
+block word wigger # slur: racial
+block word wiggers # slur: racial
+block word wog # slur: racial
+block word wogs # slur: racial
+block word kaffir # slur: racial
+block word injun # slur: racial
+block word injuns # slur: racial
+block word redskin # slur: racial
+block word redskins # slur: racial
+block word squaw # slur: racial
+block word polack # slur: racial
+block word polacks # slur: racial
+block word pikey # slur: racial
+block word fag # slur: homophobic
+block word fags # slur: homophobic
+block word fagz # slur: homophobic
+block sub faggot # slur: homophobic
+block word faggit # slur: homophobic
+block word fagget # slur: homophobic
+block word dyke # slur: homophobic
+block word dykes # slur: homophobic
+block word lesbo # slur: homophobic
+block word poofter # slur: homophobic
+block sub fudgepacker # slur: homophobic
+block sub carpetmuncher # slur: homophobic
+block word tranny # slur: transphobic
+block word trannie # slur: transphobic
+block word trannies # slur: transphobic
+block word trannys # slur: transphobic
+block sub shemale # slur: transphobic
+block word troon # slur: transphobic
+block word troons # slur: transphobic
+block word retard # slur: ableist
+block word retards # slur: ableist
+block word retarded # slur: ableist
+block word rtard # slur: ableist
+block word mongoloid # slur: ableist
+
+# mask: hidden with '*' for players who have the chat filter on
+mask sub fuck
+mask sub phuck
+mask sub fvck
+mask sub fcuk
+mask word fck
+mask word fcking
+mask word fuk
+mask word fuks
+mask word fuker
+mask word fukin
+mask word fuking
+mask word fuked
+mask sub shit
+mask word shyt
+mask sub bitch
+mask sub biatch
+mask word btch
+mask word beotch
+mask sub cunt
+mask word kunt
+mask sub asshole
+mask sub arsehole
+mask sub whore
+mask sub slut
+mask word skank
+mask word douche
+mask sub douchebag
+mask word twat
+mask word twats
+mask word wank
+mask word wanker
+mask word wankers
+mask word wanking
+mask word dick
+mask word dicks
+mask sub dickhead
+mask word cock
+mask word cocks
+mask sub cocksuck
+mask word pussy
+mask word pussies
+mask word cum
+mask word cumming
+mask sub cumshot
+mask word jizz
+mask word tits
+mask word titty
+mask word titties
+mask word clit
+mask word milf
+mask word anal
+mask word nude
+mask word nudes
+mask sub porn
+mask sub hentai
+mask sub dildo
+mask sub blowjob
+mask sub handjob
+mask sub rimjob
+mask sub footjob
+mask sub gangbang
+mask sub bukkake
+mask sub creampie
+mask sub deepthroat
+mask sub buttplug
+mask sub cunnilingus
+mask sub anilingus
+mask word fellatio
+mask word bdsm
+mask sub orgasm
+mask sub masturbat
+mask sub masterbat
+mask sub jerkoff
+mask word rape
+mask word raped
+mask word rapes
+mask word raping
+mask word rapist
+mask word puta
+mask word pendejo
+mask word mierda
+mask word cazzo
+mask sub fanculo
+mask word kurwa
+mask word pizda
+mask word chuj
+mask word arschloch
+mask word fotze
+mask word wichser
+
+# allow: innocent words that contain a filtered term
+allow sub scunthorpe # cunt
+allow sub shiitake # shit
+allow sub mashita # shit (japanese romaji, e.g. gozaimashita)
+allow sub shitai # shit (japanese romaji)
+allow sub shiteru # shit (japanese romaji)
+allow sub snigger # nigger
