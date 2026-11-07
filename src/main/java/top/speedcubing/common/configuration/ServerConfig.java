@@ -2,6 +2,7 @@ package top.speedcubing.common.configuration;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import top.speedcubing.common.chatfilter.ChatFilter;
 import top.speedcubing.common.CommonLib;
 import top.speedcubing.common.database.Database;
 import top.speedcubing.common.events.ConfigReloadEvent;
@@ -52,6 +53,8 @@ public class ServerConfig {
         } catch (Exception exception) {
             exception.printStackTrace();
         }
+        // dictionary files in /storage/chatfilter/, independent of server.json and the database
+        ChatFilter.load();
     }
 
     @CubingEventHandler(priority = 10)

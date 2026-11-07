@@ -1,0 +1,134 @@
+# Chat filter list: Chinese (traditional and simplified).
+# Format: <tier> <mode> <term> [# note]
+#   tier: allow | mask | block
+#   mode: word | sub (all Chinese entries use sub)
+# Mild swearing and everyday insults are allowed on purpose.
+
+# block: never delivered, staff notified
+block sub 台獨 # political
+block sub 台独 # political
+block sub 黑鬼 # slur: racial
+block sub 支那 # slur: racial
+block sub 印度阿三 # slur: racial
+block sub 小日本 # slur: racial
+block sub 日本鬼子 # slur: racial
+block sub 台巴子 # slur: racial
+block sub 阿六仔 # slur: racial
+block sub 阿陆仔 # slur: racial
+block sub 死gay # slur: homophobic
+block sub 死玻璃 # slur: homophobic
+block sub 死同性戀 # slur: homophobic
+block sub 死同性恋 # slur: homophobic
+block sub 人妖 # slur: transphobic
+
+# mask: hidden with '*' for players who have the chat filter on
+mask sub 幹
+mask sub 幹你娘
+mask sub 干你娘
+mask sub 幹恁娘
+mask sub 干恁娘
+mask sub 幹林娘
+mask sub 干林娘
+mask sub 幹拎娘
+mask sub 干拎娘
+mask sub 幹你老師
+mask sub 干你老师
+mask sub 幹你老母
+mask sub 干你老母
+mask sub 靠北
+mask sub 靠杯
+mask sub 靠腰
+mask sub 雞掰
+mask sub 鸡掰
+mask sub 機掰
+mask sub 机掰
+mask sub 雞巴
+mask sub 鸡巴
+mask sub 懶叫
+mask sub 懒叫
+mask sub 懶趴
+mask sub 懒趴
+mask sub 三小
+mask sub 屁眼
+mask sub 操你
+mask sub 操他媽
+mask sub 操他妈
+mask sub 操蛋
+mask sub 草你媽
+mask sub 草你妈
+mask sub 草泥馬
+mask sub 草泥马
+mask sub 日你媽
+mask sub 日你妈
+mask sub 日你娘
+mask sub 去你媽的
+mask sub 去你妈的
+mask sub 他媽的
+mask sub 他妈的
+mask sub 你媽逼
+mask sub 你妈逼
+mask sub 媽了個逼
+mask sub 妈了个逼
+mask sub 肏
+mask sub 屄
+mask sub 傻逼
+mask sub 煞筆
+mask sub 煞笔
+mask sub 屌你
+mask sub 婊
+mask sub 賤人
+mask sub 贱人
+mask sub 賤貨
+mask sub 贱货
+mask sub 騷貨
+mask sub 骚货
+mask sub 狗娘養的
+mask sub 狗娘养的
+mask sub 雜種
+mask sub 杂种
+mask sub 白痴
+mask sub 白癡
+mask sub 智障
+mask sub 弱智
+mask sub 腦殘
+mask sub 脑残
+mask sub 口交
+mask sub 肛交
+mask sub 強姦
+mask sub 强奸
+
+# allow: innocent words that contain a filtered term
+allow sub 幹嘛 # 幹
+allow sub 幹麻 # 幹
+allow sub 幹嗎 # 幹
+allow sub 幹麼 # 幹
+allow sub 幹啥 # 幹
+allow sub 幹什麼 # 幹
+allow sub 幹甚麼 # 幹
+allow sub 幹掉 # 幹
+allow sub 幹得 # 幹
+allow sub 幹部 # 幹
+allow sub 幹事 # 幹
+allow sub 幹活 # 幹
+allow sub 幹線 # 幹
+allow sub 幹道 # 幹
+allow sub 幹練 # 幹
+allow sub 幹勁 # 幹
+allow sub 幹員 # 幹
+allow sub 幹細胞 # 幹
+allow sub 能幹 # 幹
+allow sub 才幹 # 幹
+allow sub 骨幹 # 幹
+allow sub 樹幹 # 幹
+allow sub 主幹 # 幹
+allow sub 軀幹 # 幹
+allow sub 苦幹 # 幹
+allow sub 實幹 # 幹
+allow sub 精幹 # 幹
+allow sub 三小時 # 三小
+allow sub 三小时 # 三小
+allow sub 三小姐 # 三小
+allow sub 靠北邊 # 靠北
+allow sub 靠北边 # 靠北
+allow sub 印度支那 # 支那
+allow sub 智障人士 # 智障 (neutral usage)
