@@ -45,4 +45,5 @@ public final class Msg {
     public static final String TAG_GAME = prefix("Tag Game", '6');
     public static final String KILL_EFFECTS = prefix("KillEffects", 'd');
     public static final String PRACTICE = prefix("Practice", 'b');
+    public static final String FILTER = prefix("Filter", 'c');
 }
